@@ -479,12 +479,13 @@ function bindEvents() {
 function update(id, field, val) {
   var p = patients.find(function(x){ return x.id === id; });
   if (p) { p[field] = val; p.saved = false; }
+  saveToStorage();
   renderTabs();
 }
 
 function updateLokalis(id, idx, field, val) {
   var p = patients.find(function(x){ return x.id === id; });
-  if (p && p.lokalis[idx]) { p.lokalis[idx][field] = val; }
+  if (p && p.lokalis[idx]) { p.lokalis[idx][field] = val; saveToStorage(); }
 }
 
 function addPatient() {
@@ -492,6 +493,7 @@ function addPatient() {
   var p = newPatient(room);
   patients.unshift(p);
   expandedId = p.id;
+  saveToStorage();
   renderTabs();
   renderPatients();
   setTimeout(function() {
@@ -510,6 +512,7 @@ function addLokalis(id, regio) {
   if (!p) return;
   p.lokalis.push({ regio: regio, inspeksi: "", palpasi: "", perkusi: "", auskultasi: "" });
   expandedId = id;
+  saveToStorage();
   renderPatients();
   setTimeout(function() {
     var el = document.getElementById("lokalis-" + id);
@@ -519,13 +522,14 @@ function addLokalis(id, regio) {
 
 function removeLokalis(id, idx) {
   var p = patients.find(function(x){ return x.id === id; });
-  if (p) { p.lokalis.splice(idx, 1); renderPatients(); }
+  if (p) { p.lokalis.splice(idx, 1); saveToStorage(); renderPatients(); }
 }
 
 function savePatient(id) {
   var p = patients.find(function(x){ return x.id === id; });
   if (p) {
     p.saved = true;
+    saveToStorage();
     showToast("tersimpan: " + (p.nama || "pasien baru"));
     renderPatients();
   }
@@ -535,6 +539,7 @@ function deletePatient(id) {
   if (!confirm("Hapus data pasien ini?")) return;
   patients = patients.filter(function(x){ return x.id !== id; });
   if (expandedId === id) expandedId = null;
+  saveToStorage();
   renderTabs();
   renderPatients();
 }
@@ -608,6 +613,17 @@ document.getElementById("copyBtn").addEventListener("click", function() {
   navigator.clipboard.writeText(text).then(function(){ showToast("disalin ke clipboard"); });
 });
 
+// Load from localStorage on startup
+function saveToStorage() {
+  try { localStorage.setItem('fu_onko_patients', JSON.stringify(patients)); } catch(e) {}
+}
+function loadFromStorage() {
+  try {
+    var saved = localStorage.getItem('fu_onko_patients');
+    if (saved) { patients = JSON.parse(saved); }
+  } catch(e) {}
+}
+loadFromStorage();
 renderTabs();
 renderPatients();
 </script>
